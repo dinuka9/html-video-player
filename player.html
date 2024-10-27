@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			html {
+			  box-sizing: border-box;
+			  font-family: 'Helvetica';
+			}
+
+			*, *:before, *:after {
+			  box-sizing: inherit;
+			}
+
+			body {
+			  margin: 0;
+			  padding: 0;
+			  display: flex;
+			  background: #000000;
+			  background-size: cover;
+			  align-items: center;
+			  justify-content: center;
+			  overflow: hidden;
+			}
+
+			video {
+				height: 100vh;
+				width: 100%;
+				object-fit: cover; 
+				position: absolute;
+			}
+
+			.player {
+			  
+			  border: 5px solid rgba(0,0,0,0.2);
+			  box-shadow: 0 0 20px rgba(0,0,0,0.2);
+			  position: relative;
+			  font-size: 0;
+			  
+			}
+			.video-container{
+			  position: center;
+			  
+			}
+			.video-forward-notify{
+			  text-align: center;
+			  width:100%;
+			  height:200%;
+			  border-radius:100% 0 0 100%;
+			  position: absolute;
+			  display:flex;
+			  flex-direction: row;
+			  right: -50%;
+			  top:-50%;
+			}
+
+			.video-forward-notify .icon{
+			  justify-content:flex-start;
+			  align-items:center;
+			  margin: auto 0 auto 15%;
+			  color: rgba(255,255,255, 1);
+			}
+			.video-rewind-notify{
+			  text-align: center;
+			  width:100%;
+			  height:200%;
+			  border-radius:0 100% 100% 0;
+			  position: absolute;
+			  display:flex;
+			  flex-direction: row;
+			  left: -50%;
+			  top:-50%;
+			}
+
+			.video-rewind-notify .icon{
+			  justify-content:flex-start;
+			  align-items:center;
+			  margin: auto 0 auto 60%;
+			  color: rgba(255,255,255, 1);
+			}
+			.icon i{
+			  display:block;
+			}
+			.notification{
+			  transition: background 0.8s;
+			  background: rgba(200,200,200,.4) radial-gradient(circle, transparent 1%, rgba(200,200,200,.4) 1%) center/15000%;
+			  pointer-events:none;
+			  display: none;
+			}
+			i{
+			  font-style:normal;
+			}
+			.animate-in{
+			  display:flex;
+			  animation: ripple 1s forwards;
+			}
+			.animate-in i{
+			  display:block;
+			}
+			.animate-in.forward i{
+			  padding-bottom:2px;
+			}
+			.animate-in.forward i{
+			  animation: fadeInLeft .7s;
+			}
+			.animate-in.rewind i{
+			  animation: fadeInRight .7s;
+			}
+			@keyframes ripple{
+			  0%   { 
+				background-color: rgba(200,200,200,.4);
+				background-size: 100%;
+				transition: background 0s;
+				opacity:1;
+			  }
+			  100% { 
+			  transition: background 0.8s;
+			  background: rgba(200,200,200,.4) radial-gradient(circle, transparent 1%, rgba(200,200,200,.4) 1%) center/15000%;
+			  display: flex;
+				opacity:0;
+			  }
+			}
+			@keyframes fadeInLeft {
+			  0% {
+				opacity: 0;
+				transform: translateX(-20px);
+			  }
+			  100% {
+				opacity: 1;
+				transform: translateX(0);
+			  }
+			}
+			@keyframes fadeInRight {
+			  0% {
+				opacity: 0;
+				transform: translateX(0px);
+			  }
+			  100% {
+				opacity: 1;
+				transform: translateX(-20px);
+			  }
+			}
+			span{
+			  font-size:12px;
+			}
+			
+		</style>
+		
+	</head>
+	<body>
+		<!--
+		<video width="1080" height="760" controls>
+			<source src="./Reacher.S01E02.WEBRip.x264-ION10.mp4" type="video/mp4">
+	    </video>
+	    -->
+
+
+	    <div class="video-container">
+		  <video id="video-id" class="player video viewer" src="./video.mp4" controls></video>
+		  <div class="video-rewind-notify rewind notification">
+			<div class="rewind-icon icon">
+				<i class="left-triangle triangle">◀◀◀</i>
+				<span class="rewind">10 seconds</span>
+			</div>
+		  </div>
+		  <div class="video-forward-notify forward notification">
+			<div class="forward-icon icon">
+				<i class="right-triangle triangle">▶▶▶</i>
+				<span class="forward">10 seconds</span>
+			</div>
+		  </div>
+		</div>
+	    
+	    
+	    <script>
+		//grab the video dom element
+		const video = document.getElementById('video-id'); 
+		const notifications = document.querySelectorAll('.notification');
+		const forwardNotificationValue = document.querySelector('.video-forward-notify span');
+		const rewindNotificationValue = document.querySelector('.video-rewind-notify span');
+
+
+		let timer;
+		let rewindSpeed = 0;
+		let forwardSpeed = 0;
+
+		//function for double click event listener on the video
+		//todo change those variable to html5 data attributes
+		function updateCurrentTime(delta){
+			let isRewinding = delta < 0;
+		  
+			if(isRewinding){
+			  rewindSpeed = rewindSpeed + delta;
+			  forwardSpeed = 0;
+			}else{
+			  forwardSpeed = forwardSpeed + delta;
+			  rewindSpeed = 0;
+			}
+			
+			//clear the timeout
+			clearTimeout(timer);
+		  
+			let speed = (isRewinding ? rewindSpeed : forwardSpeed);
+			video.currentTime = video.currentTime + speed;
+		  
+			let NotificationValue =  isRewinding ? rewindNotificationValue : forwardNotificationValue ;
+			NotificationValue.innerHTML = `${Math.abs(speed)} seconds`;
+		   
+			//reset accumulator within 2 seconds of a double click
+			/*/timer = setTimeout(function(){
+			  rewindSpeed = 0;
+			  forwardSpeed = 0;
+			}, 1);*/ // you can edit this delay value for the timeout, i have it set for 2 seconds
+			console.log(`updated time: ${video.currentTime}`);
+
+			rewindSpeed = 0;
+			forwardSpeed = 0;
+		}
+
+
+		function animateNotificationIn(isRewinding){
+		  isRewinding ? notifications[0].classList.add('animate-in') : notifications[1].classList.add('animate-in'); 
+		}
+
+		function animateNotificationOut(){
+			this.classList.remove('animate-in');
+		}
+
+		function forwardVideo(){
+		  updateCurrentTime(1);
+		  animateNotificationIn(false);
+		}
+
+		function rewindVideo(){
+			updateCurrentTime(-1);
+			animateNotificationIn(true);
+		}
+
+		//Event Handlers
+		function doubleClickHandler(e){
+			console.log(`current time: ${video.currentTime}`);
+			const videoWidth = video.offsetWidth;
+			(e.offsetX < videoWidth/4) ? rewindVideo() : forwardVideo();
+		}
+
+		function togglePlay(){
+		  video.paused ? video.play() : video.pause();
+		}
+
+		//Event Listeners
+		//video.addEventListener('click', togglePlay);
+		video.addEventListener('dblclick', doubleClickHandler);
+		notifications.forEach(function(notification){
+		  notification.addEventListener('animationend', animateNotificationOut);
+		});
+
+
+		document.onkeydown = function(e) {
+			switch (e.keyCode) {
+				case 32:
+					//togglePlay();
+					break;
+				case 37:
+					rewindVideo();
+					break;
+				case 38:
+					alert('up');
+					break;
+				case 39:
+					forwardVideo();
+					break;
+				case 40:
+					alert('down');
+					break;
+			}
+		};
+
+		</script>
+	    
+    </body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
